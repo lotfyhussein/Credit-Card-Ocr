@@ -196,7 +196,10 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 
 			# the classification for the digit ROI will be the reference
 			# digit name with the *largest* template matching score
-			groupOutput.append(str(np.argmax(scores)))
+			if np.argmax(scores) == 10:
+				groupOutput.append('/')
+			else:	
+				groupOutput.append(str(np.argmax(scores)))
 
 			# draw the digit classifications around the group
 			cv2.rectangle(image, (gX - 5, gY - 5),
