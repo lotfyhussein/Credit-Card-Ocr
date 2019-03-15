@@ -7,7 +7,6 @@ import numpy as np
 import argparse
 import imutils
 import cv2
-from PIL import Image
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -62,9 +61,6 @@ sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
 # load the input image, resize it, and convert it to grayscale
 image2 = cv2.imread(args["image"], 0)
 image = cv2.imread(args["image"])
-
-col = Image.open(args["image"])
-gray = col.convert('L')
 
 
 image = imutils.resize(image, width=300)
@@ -221,7 +217,10 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 # display the output credit card information to the screen
 #print("Credit Card Type: {}".format(FIRST_NUMBER[output[0]]))
 print("Credit Card #: {}".format("".join(output)))
+<<<<<<< HEAD
 image = cv2.resize(image,(0,0),fx = 6,fy=6)
+=======
+>>>>>>> 0e86c76727e84620140ec0b51612fc713c78fea7
 cv2.imshow("Image", image)
 cv2.imwrite('final.png',image)
 cv2.waitKey(0)
