@@ -67,33 +67,32 @@ image = imutils.resize(image, width=300)
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 cv2.imshow("g", gray)
 
-#cv2.imshow("bw", im_bw)
-#img = cv2.medianBlur(image2,5)
-th2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,5,2)
-th3 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,3,2)
-
-cv2.imshow("bw", th2)
 
 kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
 im = cv2.filter2D(gray, -1, kernel)
-# grayH = cv2.GaussianBlur(gray,(0,0),3,3)
-# im = cv2.addWeighted(gray,1.5,grayH,-0.5,0)
 
-#x = cv2.threshold(im, 0, 255,
-#	cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+#New Layer
+mid = cv2.GaussianBlur(im,(0,0),21,21)
+th2 = cv2.adaptiveThreshold(mid,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
+            cv2.THRESH_BINARY,11,2)
+im2 = cv2.addWeighted(im,1.5,th2,-0.5,0)
 
-#im = cv2.resize(im,(0,0),fx = 6,fy=6)
 
 cv2.imshow("im", im)
+cv2.imshow("im2", im2)
 
 
 # apply a tophat (whitehat) morphological operator to find light
 # regions against a dark background (i.e., the credit card numbers)
 
 tophat = cv2.morphologyEx(im, cv2.MORPH_TOPHAT, rectKernel)
+tophat2 = cv2.morphologyEx(im2, cv2.MORPH_TOPHAT, rectKernel)
+
 #tophat = cv2.resize(tophat,(0,0),fx = 3,fy=3);
 #tophat = cv2.resize(tophat,(0,0),fx = 6,fy=6)
-cv2.imshow("tophat", tophat)
+# cv2.imshow("tophat", tophat)
+# cv2.imshow("tophat2", tophat2)
+
 # compute the Scharr gradient of the tophat image, then scale
 # the rest back into the range [0, 255]
 gradX = cv2.Sobel(tophat, ddepth=cv2.CV_16S, dx=1, dy=0,
@@ -117,7 +116,7 @@ thresh = cv2.threshold(gradX, 0, 255,
 thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, sqKernel)
 
 #thresh = cv2.resize(thresh,(0,0),fx = 3,fy=3);
-cv2.imshow("thresh", thresh)
+# cv2.imshow("thresh", thresh)
 # find contours in the thresholded image, then initialize the
 # list of digit locations
 cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL,
@@ -154,18 +153,25 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 	groupOutput = []
 	cv2.rectangle(image, (gX,gY), ((gX+gW), (gY+gH)), (0,0,0), 2) 
 
-
 	# extract the group ROI of 4 digits from the grayscale image,
 	# then apply thresholding to segment the digits from the
 	# background of the credit card
 	group = gray[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
+	#New Layer 
+	mid2 = cv2.GaussianBlur(group,(0,0),21,21)
+	th2 = cv2.adaptiveThreshold(mid2,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
+            cv2.THRESH_BINARY,11,2)
+	g2 = cv2.addWeighted(group,1.5,th2,-0.5,0)
+	cv2.imshow("group", group)
+	cv2.imshow("group2", g2)
 	group = cv2.threshold(group, 0, 255,
 		cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-	cv2.imshow("group", group)
+	group2 = cv2.threshold(g2, 0, 255,
+		cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	#cv2.waitKey(2000)
 	# detect the contours of each individual digit in the group,
 	# then sort the digit contours from left to right
-	digitCnts = cv2.findContours(group.copy(), cv2.RETR_EXTERNAL,
+	digitCnts = cv2.findContours(group2.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)
 	digitCnts = imutils.grab_contours(digitCnts)
 	digitCnts = contours.sort_contours(digitCnts,
@@ -178,7 +184,7 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 		# the reference OCR-A images
 		(x, y, w, h) = cv2.boundingRect(c)
 		#cv2.rectangle(group, (x,y), ((x+w), (y+h)), (90,0,255), 2) 
-		cv2.imshow("group", group)
+		# cv2.imshow("group", group)
 		ar = w / float(h)
 		#print ("AR: " , ar)
 
