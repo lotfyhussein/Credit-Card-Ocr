@@ -80,10 +80,13 @@ cv2.imshow("bw", th2)
 
 kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
 im = cv2.filter2D(gray, -1, kernel)
+# grayH = cv2.GaussianBlur(gray,(0,0),3,3)
+# im = cv2.addWeighted(gray,1.5,grayH,-0.5,0)
 
 #x = cv2.threshold(im, 0, 255,
 #	cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
+#im = cv2.resize(im,(0,0),fx = 6,fy=6)
 
 cv2.imshow("im", im)
 
@@ -93,6 +96,7 @@ cv2.imshow("im", im)
 
 tophat = cv2.morphologyEx(im, cv2.MORPH_TOPHAT, rectKernel)
 #tophat = cv2.resize(tophat,(0,0),fx = 3,fy=3);
+#tophat = cv2.resize(tophat,(0,0),fx = 6,fy=6)
 cv2.imshow("tophat", tophat)
 # compute the Scharr gradient of the tophat image, then scale
 # the rest back into the range [0, 255]
@@ -209,15 +213,15 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 			cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
 			# update the output digits list
-			output.extend(groupOutput)
-		print ("==================")
+	output.extend(groupOutput)
+		#print ("==================")
 		#print(np.argmax(scores))
-		print(scores)
+		#print(scores)
 
 # display the output credit card information to the screen
 #print("Credit Card Type: {}".format(FIRST_NUMBER[output[0]]))
 print("Credit Card #: {}".format("".join(output)))
-image = cv2.resize(image,(0,0),fx = 3,fy=3)
+image = cv2.resize(image,(0,0),fx = 6,fy=6)
 cv2.imshow("Image", image)
 cv2.imwrite('final.png',image)
 cv2.waitKey(0)
