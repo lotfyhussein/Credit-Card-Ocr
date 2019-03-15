@@ -200,7 +200,10 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 
 			# the classification for the digit ROI will be the reference
 			# digit name with the *largest* template matching score
-			groupOutput.append(str(np.argmax(scores)))
+			if np.argmax(scores) == 10:
+				groupOutput.append('/')
+			else:	
+				groupOutput.append(str(np.argmax(scores)))
 
 			# draw the digit classifications around the group
 			cv2.rectangle(image, (gX - 5, gY - 5),
@@ -217,10 +220,6 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 # display the output credit card information to the screen
 #print("Credit Card Type: {}".format(FIRST_NUMBER[output[0]]))
 print("Credit Card #: {}".format("".join(output)))
-<<<<<<< HEAD
-image = cv2.resize(image,(0,0),fx = 6,fy=6)
-=======
->>>>>>> 0e86c76727e84620140ec0b51612fc713c78fea7
 cv2.imshow("Image", image)
 cv2.imwrite('final.png',image)
 cv2.waitKey(0)
