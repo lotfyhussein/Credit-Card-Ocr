@@ -206,20 +206,19 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 	# extract the group ROI of 4 digits from the grayscale image,
 	# then apply thresholding to segment the digits from the
 	# background of the credit card
-	group = gray[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
-	#New Layer 
-	mid2 = cv2.GaussianBlur(group,(0,0),21,21)
-	th2 = cv2.adaptiveThreshold(mid2,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
-            cv2.THRESH_BINARY,11,2)
-	g2 = cv2.addWeighted(group,1.5,th2,-0.5,0)
+	group = im2[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
+	# #New Layer 
+	# mid2 = cv2.GaussianBlur(group,(0,0),21,21)
+	# th2 = cv2.adaptiveThreshold(mid2,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
+ #            cv2.THRESH_BINARY,11,2)
+	# g2 = cv2.addWeighted(group,1.5,th2,-0.5,0)
 	cv2.imshow("group", group)
-	cv2.imshow("group2", g2)
 	group = cv2.threshold(group, 0, 255,
 		cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	#cv2.waitKey(2000)
 	# detect the contours of each individual digit in the group,
 	# then sort the digit contours from left to right
-	digitCnts = cv2.findContours(group2.copy(), cv2.RETR_EXTERNAL,
+	digitCnts = cv2.findContours(group.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)
 	digitCnts = imutils.grab_contours(digitCnts)
 	digitCnts = contours.sort_contours(digitCnts,
