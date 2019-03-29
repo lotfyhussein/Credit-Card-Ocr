@@ -74,7 +74,7 @@ im = cv2.filter2D(gray, -1, kernel)
 mid = cv2.GaussianBlur(im,(0,0),21,21)
 th2 = cv2.adaptiveThreshold(mid,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
             cv2.THRESH_BINARY,11,2)
-im2 = cv2.addWeighted(im,1.5,th2,-0.5,0)
+im2 = cv2.addWeighted(gray,0.75,th2,0.25,0)
 
 
 cv2.imshow("im", im)
@@ -84,7 +84,7 @@ cv2.imshow("im2", im2)
 # apply a tophat (whitehat) morphological operator to find light
 # regions against a dark background (i.e., the credit card numbers)
 
-tophat = cv2.morphologyEx(im2, cv2.MORPH_TOPHAT, rectKernel)
+tophat = cv2.morphologyEx(im, cv2.MORPH_TOPHAT, rectKernel)
 
 #tophat = cv2.resize(tophat,(0,0),fx = 3,fy=3);
 #tophat = cv2.resize(tophat,(0,0),fx = 6,fy=6)
@@ -204,7 +204,7 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 	# extract the group ROI of 4 digits from the grayscale image,
 	# then apply thresholding to segment the digits from the
 	# background of the credit card
-	group = im2[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
+	group = gray[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
 	# #New Layer 
 	# mid2 = cv2.GaussianBlur(group,(0,0),21,21)
 	# th2 = cv2.adaptiveThreshold(mid2,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
