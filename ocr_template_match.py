@@ -269,7 +269,7 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 # display the output credit card information to the screen
 #print("Credit Card Type: {}".format(FIRST_NUMBER[output[0]]))
 print("Credit Card #: {}".format("".join(output)))
-image = cv2.resize(image,(0,0),fx = 6,fy=6)
+# image = cv2.resize(image,(0,0),fx = 6,fy=6)
 cv2.imwrite("t.png", group)
 cv2.imshow("Image", image)
 cv2.imwrite('final.png',image)
