@@ -14,6 +14,8 @@ ap.add_argument("-i", "--image", required=True,
 	help="path to input image")
 ap.add_argument("-r", "--reference", required=True,
 	help="path to reference OCR-A image")
+ap.add_argument("-rl", "--referenceLetter", required=True,
+	help="path to reference OCR-A letters")
 args = vars(ap.parse_args())
 
 # define a dictionary that maps the first digit of a credit card
@@ -53,6 +55,31 @@ for (i, c) in enumerate(refCnts):
 	# update the digits dictionary, mapping the digit name to the ROI
 	digits[i] = roi
 
+
+
+refLetter = cv2.imread(args["referenceLetter"])
+refLetter = cv2.cvtColor(refLetter, cv2.COLOR_BGR2GRAY)
+refLetter = cv2.threshold(refLetter, 10, 255, cv2.THRESH_BINARY_INV)[1]
+
+# find contours in the OCR-A image (i.e,. the outlines of the digits)
+# sort them from left to right, and initialize a dictionary to map
+# digit name to the ROI
+refCnts = cv2.findContours(refLetter.copy(), cv2.RETR_EXTERNAL,
+	cv2.CHAIN_APPROX_SIMPLE)
+refCnts = imutils.grab_contours(refCnts)
+refCnts = contours.sort_contours(refCnts, method="left-to-right")[0]
+digitsLetters = {}
+
+# loop over the OCR-A reference contours
+for (i, c) in enumerate(refCnts):
+	# compute the bounding box for the digit, extract it, and resize
+	# it to a fixed size
+	(x, y, w, h) = cv2.boundingRect(c)
+	roi = refLetter[y:y + h, x:x + w]
+	roi = cv2.resize(roi, (57, 88))
+
+	# update the digits dictionary, mapping the digit name to the ROI
+	digitsLetters[i] = roi
 # initialize a rectangular (wider than it is tall) and square
 # structuring kernel
 rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 3))
@@ -84,7 +111,7 @@ cv2.imshow("im2", im2)
 # apply a tophat (whitehat) morphological operator to find light
 # regions against a dark background (i.e., the credit card numbers)
 
-tophat = cv2.morphologyEx(im2, cv2.MORPH_TOPHAT, rectKernel)
+tophat = cv2.morphologyEx(im, cv2.MORPH_TOPHAT, rectKernel)
 
 #tophat = cv2.resize(tophat,(0,0),fx = 3,fy=3);
 #tophat = cv2.resize(tophat,(0,0),fx = 6,fy=6)
@@ -188,8 +215,9 @@ for (i, c) in enumerate(cnts):
 				cv2.rectangle(image, (x,y), (x+w, y+h),(0, 255, 0), 2)
 				locs.append((x, y, w, h))
 		else:
-			locs.append((x_name, y_name, w_name, h_name))
-			cv2.rectangle(image, (x_name,y_name), (x_name+w_name, y_name+h_name),(0, 255, 0), 2)
+			if (x_name, y_name, w_name, h_name) not in locs:
+				locs.append((x_name, y_name, w_name, h_name))
+				cv2.rectangle(image, (x_name,y_name), (x_name+w_name, y_name+h_name),(255, 0, 0), 2)
 
 # sort the digit locations from left-to-right, then initialize the
 # list of classified digits
@@ -204,7 +232,7 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 	# extract the group ROI of 4 digits from the grayscale image,
 	# then apply thresholding to segment the digits from the
 	# background of the credit card
-	group = im2[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
+	group = gray[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
 	# #New Layer 
 	# mid2 = cv2.GaussianBlur(group,(0,0),21,21)
 	# th2 = cv2.adaptiveThreshold(mid2,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
@@ -239,26 +267,49 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 			roi = group[y:y + h, x:x + w]
 			roi = cv2.resize(roi, (57, 88))
 			# loop over the reference digit name and digit ROI
-			for (digit, digitROI) in digits.items():
-				# apply correlation-based template matching, take the
-				# score, and update the scores list
-				result = cv2.matchTemplate(roi, digitROI,
-					cv2.TM_CCOEFF)
-				(_, score, _, _) = cv2.minMaxLoc(result)
-				scores.append(score)
+			print ("I AM HERE")
+			print(largest_y)
+			print(gY)
+			#cv2.waitKey(1500)
+			if gY == largest_y:
+				for (digit, digitROI) in digitsLetters.items():
+					# apply correlation-based template matching, take the
+					# score, and update the scores list
+					result = cv2.matchTemplate(roi, digitROI,
+						cv2.TM_CCOEFF)
+					(_, score, _, _) = cv2.minMaxLoc(result)
+					scores.append(score)
 
-			# the classification for the digit ROI will be the reference
-			# digit name with the *largest* template matching score
-			if np.argmax(scores) == 10:
-				groupOutput.append('/')
-			else:	
-				groupOutput.append(str(np.argmax(scores)))
+				# the classification for the digit ROI will be the reference
+				# digit name with the *largest* template matching score
+				groupOutput.append(chr(ord('A') + np.argmax(scores)))
 
-			# draw the digit classifications around the group
-			cv2.rectangle(image, (gX - 5, gY - 5),
-			(gX + gW + 5, gY + gH + 5), (0, 0, 255), 2)
-			cv2.putText(image, "".join(groupOutput), (gX, gY - 15),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+				# draw the digit classifications around the group
+				cv2.rectangle(image, (gX - 5, gY - 5),
+				(gX + gW + 5, gY + gH + 5), (0, 0, 255), 2)
+				cv2.putText(image, "".join(groupOutput), (gX, gY - 15),
+				cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+			else:
+				for (digit, digitROI) in digits.items():
+					# apply correlation-based template matching, take the
+					# score, and update the scores list
+					result = cv2.matchTemplate(roi, digitROI,
+						cv2.TM_CCOEFF)
+					(_, score, _, _) = cv2.minMaxLoc(result)
+					scores.append(score)
+
+				# the classification for the digit ROI will be the reference
+				# digit name with the *largest* template matching score
+				if np.argmax(scores) == 10:
+					groupOutput.append('/')
+				else:	
+					groupOutput.append(str(np.argmax(scores)))
+
+				# draw the digit classifications around the group
+				cv2.rectangle(image, (gX - 5, gY - 5),
+				(gX + gW + 5, gY + gH + 5), (0, 0, 255), 2)
+				cv2.putText(image, "".join(groupOutput), (gX, gY - 15),
+				cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
 			# update the output digits list
 	output.extend(groupOutput)
