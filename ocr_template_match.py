@@ -126,6 +126,44 @@ cnts = imutils.grab_contours(cnts)
 locs = []
 
 # loop over the contours
+largest_y = -1;
+for (i, c) in enumerate(cnts):
+	# compute the bounding box of the contour, then use the
+	# bounding box coordinates to derive the aspect ratio
+	(x, y, w, h) = cv2.boundingRect(c)
+	print("Getting the name")
+	if y > largest_y:
+		(x_name, y_name, w_name, h_name) = cv2.boundingRect(c)
+		ar = w_name / float(h_name)
+		#print (ar)
+		print("=============")
+		print (w)
+		print (h)
+		print ("===========")
+		if ar > 2.5 and ar < 9.0: #consider chaning (min is 2.5, max is 4)
+			if (w > 38 and w < 120) and (h > 10 and h < 20): 
+				#cv2.rectangle(image, (x_name,y_name), (x_name+w_name, y_name+h_name),(0, 0, 255), 2)
+				largest_y = y
+				#cv2.imshow("ii", image)
+	#cv2.waitKey(1000)
+	if i > 0:
+		(x2, y2, w2, h2) = cv2.boundingRect(cnts[i-1])
+		if abs(y - y2) <= 1: 
+			numbers_y_loc = y
+
+
+
+for (i, c) in enumerate(cnts):
+	# compute the bounding box of the contour, then use the
+	# bounding box coordinates to derive the aspect ratio
+	(x, y, w, h) = cv2.boundingRect(c)
+	ar = w / float(h)
+	if i > 0:
+		(x2, y2, w2, h2) = cv2.boundingRect(cnts[i-1])
+		if abs(y - y2) <= 1: 
+			numbers_y_loc = y
+			print ("numbers_y_loc")
+
 for (i, c) in enumerate(cnts):
 	# compute the bounding box of the contour, then use the
 	# bounding box coordinates to derive the aspect ratio
@@ -135,13 +173,26 @@ for (i, c) in enumerate(cnts):
 	# since credit cards used a fixed size fonts with 4 groups
 	# of 4 digits, we can prune potential contours based on the
 	# aspect ratio
-	if ar > 2.5 and ar < 4.0:
-		# contours can further be pruned on minimum/maximum width
-		# and height
-		if (w > 40 and w < 55) and (h > 10 and h < 20):
-			# append the bounding box region of the digits group
-			# to our locations list
-			locs.append((x, y, w, h))
+	#cv2.rectangle(image, (x,y), (x+w, y+h),(0, 255, 0), 2)
+	print ("===============================")
+	cv2.imshow("aspectRatioOut", image)
+	print (x)
+	print (y)
+	#cv2.waitKey(1500)
+	if y >= numbers_y_loc:
+		if ar > 2.5 and ar < 9.0: #consider chaning ()
+			# contours can further be pruned on minimum/maximum width
+			# and height
+			#print ("height: ", h)
+			#print ("width: ", w)
+			if (w > 38 and w < 60) and (h > 10 and h < 20): #it was 38
+				# append the bounding box region of the digits group
+				# to our locations list
+				cv2.rectangle(image, (x,y), (x+w, y+h),(0, 255, 0), 2)
+				locs.append((x, y, w, h))
+		else:
+			locs.append((x_name, y_name, w_name, h_name))
+			cv2.rectangle(image, (x_name,y_name), (x_name+w_name, y_name+h_name),(0, 255, 0), 2)
 
 # sort the digit locations from left-to-right, then initialize the
 # list of classified digits
@@ -153,15 +204,13 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 	# initialize the list of group digits
 	groupOutput = []
 	cv2.rectangle(image, (gX,gY), ((gX+gW), (gY+gH)), (0,0,0), 2) 
-
-
 	# extract the group ROI of 4 digits from the grayscale image,
 	# then apply thresholding to segment the digits from the
 	# background of the credit card
 	group = gray[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
 	group = cv2.threshold(group, 0, 255,
 		cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-	cv2.imshow("group", group)
+	#cv2.imshow("group", group)
 	#cv2.waitKey(2000)
 	# detect the contours of each individual digit in the group,
 	# then sort the digit contours from left to right
@@ -177,16 +226,16 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 		# the digit, and resize it to have the same fixed size as
 		# the reference OCR-A images
 		(x, y, w, h) = cv2.boundingRect(c)
-		#cv2.rectangle(group, (x,y), ((x+w), (y+h)), (90,0,255), 2) 
-		cv2.imshow("group", group)
+		#cv2.rectangle(group, (x,y), ((x+w), (y+h)), (0,255,0), 2) 
+		#cv2.imshow("group", group)
 		ar = w / float(h)
-		#print ("AR: " , ar)
-
-
-
+		#cv2.waitKey(1500)
 		# initialize a list of template matching scores
 		scores = []
 		if ar  > 0.52 and ar < 0.8:
+			
+			#print ("AR: " , ar)
+			#cv2.waitKey(1500)
 			roi = group[y:y + h, x:x + w]
 			roi = cv2.resize(roi, (57, 88))
 			# loop over the reference digit name and digit ROI
@@ -220,6 +269,8 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 # display the output credit card information to the screen
 #print("Credit Card Type: {}".format(FIRST_NUMBER[output[0]]))
 print("Credit Card #: {}".format("".join(output)))
+image = cv2.resize(image,(0,0),fx = 6,fy=6)
+cv2.imwrite("t.png", group)
 cv2.imshow("Image", image)
 cv2.imwrite('final.png',image)
 cv2.waitKey(0)
