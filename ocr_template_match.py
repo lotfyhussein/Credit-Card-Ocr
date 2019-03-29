@@ -59,7 +59,6 @@ rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 3))
 sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
 
 # load the input image, resize it, and convert it to grayscale
-image2 = cv2.imread(args["image"], 0)
 image = cv2.imread(args["image"])
 
 
@@ -85,8 +84,7 @@ cv2.imshow("im2", im2)
 # apply a tophat (whitehat) morphological operator to find light
 # regions against a dark background (i.e., the credit card numbers)
 
-tophat = cv2.morphologyEx(im, cv2.MORPH_TOPHAT, rectKernel)
-tophat2 = cv2.morphologyEx(im2, cv2.MORPH_TOPHAT, rectKernel)
+tophat = cv2.morphologyEx(im2, cv2.MORPH_TOPHAT, rectKernel)
 
 #tophat = cv2.resize(tophat,(0,0),fx = 3,fy=3);
 #tophat = cv2.resize(tophat,(0,0),fx = 6,fy=6)
@@ -156,22 +154,19 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 	# extract the group ROI of 4 digits from the grayscale image,
 	# then apply thresholding to segment the digits from the
 	# background of the credit card
-	group = gray[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
+	group = im2[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
 	#New Layer 
-	mid2 = cv2.GaussianBlur(group,(0,0),21,21)
-	th2 = cv2.adaptiveThreshold(mid2,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
-            cv2.THRESH_BINARY,11,2)
-	g2 = cv2.addWeighted(group,1.5,th2,-0.5,0)
+	# mid2 = cv2.GaussianBlur(group,(0,0),21,21)
+	# th2 = cv2.adaptiveThreshold(mid2,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
+    #         cv2.THRESH_BINARY,11,2)
+	# g2 = cv2.addWeighted(group,1.5,th2,-0.5,0)
 	cv2.imshow("group", group)
-	cv2.imshow("group2", g2)
 	group = cv2.threshold(group, 0, 255,
-		cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-	group2 = cv2.threshold(g2, 0, 255,
 		cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	#cv2.waitKey(2000)
 	# detect the contours of each individual digit in the group,
 	# then sort the digit contours from left to right
-	digitCnts = cv2.findContours(group2.copy(), cv2.RETR_EXTERNAL,
+	digitCnts = cv2.findContours(group.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)
 	digitCnts = imutils.grab_contours(digitCnts)
 	digitCnts = contours.sort_contours(digitCnts,
