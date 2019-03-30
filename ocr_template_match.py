@@ -51,35 +51,13 @@ for (i, c) in enumerate(refCnts):
 	(x, y, w, h) = cv2.boundingRect(c)
 	roi = ref[y:y + h, x:x + w]
 	roi = cv2.resize(roi, (57, 88))
+	#cv2.imshow("f", roi)
+	#cv2.waitKey(1500)
 
 	# update the digits dictionary, mapping the digit name to the ROI
 	digits[i] = roi
 
 
-
-refLetter = cv2.imread(args["referenceLetter"])
-refLetter = cv2.cvtColor(refLetter, cv2.COLOR_BGR2GRAY)
-refLetter = cv2.threshold(refLetter, 10, 255, cv2.THRESH_BINARY_INV)[1]
-
-# find contours in the OCR-A image (i.e,. the outlines of the digits)
-# sort them from left to right, and initialize a dictionary to map
-# digit name to the ROI
-refCnts = cv2.findContours(refLetter.copy(), cv2.RETR_EXTERNAL,
-	cv2.CHAIN_APPROX_SIMPLE)
-refCnts = imutils.grab_contours(refCnts)
-refCnts = contours.sort_contours(refCnts, method="left-to-right")[0]
-digitsLetters = {}
-
-# loop over the OCR-A reference contours
-for (i, c) in enumerate(refCnts):
-	# compute the bounding box for the digit, extract it, and resize
-	# it to a fixed size
-	(x, y, w, h) = cv2.boundingRect(c)
-	roi = refLetter[y:y + h, x:x + w]
-	roi = cv2.resize(roi, (57, 88))
-
-	# update the digits dictionary, mapping the digit name to the ROI
-	digitsLetters[i] = roi
 # initialize a rectangular (wider than it is tall) and square
 # structuring kernel
 rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 3))
@@ -112,7 +90,7 @@ cv2.imshow("im2", im2)
 # regions against a dark background (i.e., the credit card numbers)
 
 tophat = cv2.morphologyEx(im, cv2.MORPH_TOPHAT, rectKernel)
-
+cv2.imshow("top", tophat)
 #tophat = cv2.resize(tophat,(0,0),fx = 3,fy=3);
 #tophat = cv2.resize(tophat,(0,0),fx = 6,fy=6)
 # cv2.imshow("tophat", tophat)
@@ -139,7 +117,7 @@ thresh = cv2.threshold(gradX, 0, 255,
 # apply a second closing operation to the binary image, again
 # to help close gaps between credit card number regions
 thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, sqKernel)
-
+cv2.imshow("r", thresh)
 #thresh = cv2.resize(thresh,(0,0),fx = 3,fy=3);
 # cv2.imshow("thresh", thresh)
 # find contours in the thresholded image, then initialize the
@@ -150,33 +128,7 @@ cnts = imutils.grab_contours(cnts)
 locs = []
 
 # loop over the contours
-largest_y = -1;
-for (i, c) in enumerate(cnts):
-	# compute the bounding box of the contour, then use the
-	# bounding box coordinates to derive the aspect ratio
-	(x, y, w, h) = cv2.boundingRect(c)
-	print("Getting the name")
-	if y > largest_y:
-		(x_name, y_name, w_name, h_name) = cv2.boundingRect(c)
-		ar = w_name / float(h_name)
-		#print (ar)
-		print("=============")
-		print (w)
-		print (h)
-		print ("===========")
-		if ar > 2.5 and ar < 9.0: #consider chaning (min is 2.5, max is 4)
-			if (w > 38 and w < 120) and (h > 10 and h < 20): 
-				#cv2.rectangle(image, (x_name,y_name), (x_name+w_name, y_name+h_name),(0, 0, 255), 2)
-				largest_y = y
-				#cv2.imshow("ii", image)
-	#cv2.waitKey(1000)
-	if i > 0:
-		(x2, y2, w2, h2) = cv2.boundingRect(cnts[i-1])
-		if abs(y - y2) <= 1: 
-			numbers_y_loc = y
-
-
-
+numbers_y_loc = 0
 for (i, c) in enumerate(cnts):
 	# compute the bounding box of the contour, then use the
 	# bounding box coordinates to derive the aspect ratio
@@ -184,10 +136,16 @@ for (i, c) in enumerate(cnts):
 	ar = w / float(h)
 	if i > 0:
 		(x2, y2, w2, h2) = cv2.boundingRect(cnts[i-1])
+		#cv2.rectangle(image, (x,y), (x+w, y+h),(0, 255, 0), 2)
+		cv2.imshow("u", image)
+		#cv2.waitKey(1500)
 		if abs(y - y2) <= 1: 
-			numbers_y_loc = y
-			print ("numbers_y_loc")
-
+			if ar > 2.5 and ar < 9.0: #consider chaning ()
+				#print(w)
+				#print(h)
+				if (w > 38 and w < 65) and (h > 10 and h < 20): #it was 38
+					numbers_y_loc = y
+					print (numbers_y_loc)
 for (i, c) in enumerate(cnts):
 	# compute the bounding box of the contour, then use the
 	# bounding box coordinates to derive the aspect ratio
@@ -200,25 +158,22 @@ for (i, c) in enumerate(cnts):
 	#cv2.rectangle(image, (x,y), (x+w, y+h),(0, 255, 0), 2)
 	print ("===============================")
 	cv2.imshow("aspectRatioOut", image)
-	print (x)
-	print (y)
+	#cv2.rectangle(image, (x,y), (x+w, y+h),(0, 255, 0), 2)
+	#print (ar)
 	#cv2.waitKey(1500)
-	if y >= numbers_y_loc:
+	if abs(y - numbers_y_loc) <= 2:
 		if ar > 2.5 and ar < 9.0: #consider chaning ()
 			# contours can further be pruned on minimum/maximum width
 			# and height
-			#print ("height: ", h)
-			#print ("width: ", w)
-			if (w > 38 and w < 60) and (h > 10 and h < 20): #it was 38
+			print ("height: ", h)
+			print ("width: ", w)
+			cv2.waitKey(3000)
+			if (w > 38 and w < 65) and (h > 10 and h < 20): #it was 38
 				# append the bounding box region of the digits group
 				# to our locations list
-				cv2.rectangle(image, (x,y), (x+w, y+h),(0, 255, 0), 2)
+				#cv2.rectangle(image, (x,y), (x+w, y+h),(0, 255, 0), 2)
+				print("i am here")
 				locs.append((x, y, w, h))
-		else:
-			if (x_name, y_name, w_name, h_name) not in locs:
-				locs.append((x_name, y_name, w_name, h_name))
-				cv2.rectangle(image, (x_name,y_name), (x_name+w_name, y_name+h_name),(255, 0, 0), 2)
-
 # sort the digit locations from left-to-right, then initialize the
 # list of classified digits
 locs = sorted(locs, key=lambda x:x[0])
@@ -257,39 +212,20 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 		# the reference OCR-A images
 		(x, y, w, h) = cv2.boundingRect(c)
 		ar = w / float(h)
+		cv2.rectangle(group, (x,y), (x+w, y+h),(0, 255, 0), 2)
 		#cv2.waitKey(1500)
 		# initialize a list of template matching scores
 		scores = []
-		if ar  > 0.52 and ar < 0.8:
-			
+		print("Done")
+		print (ar)
+		cv2.waitKey(3000)
+		if ar  > 0.52 and ar < 0.8:			
 			#print ("AR: " , ar)
 			#cv2.waitKey(1500)
 			roi = group[y:y + h, x:x + w]
 			roi = cv2.resize(roi, (57, 88))
-			# loop over the reference digit name and digit ROI
-			print ("I AM HERE")
-			print(largest_y)
-			print(gY)
 			#cv2.waitKey(1500)
-			if gY == largest_y:
-				for (digit, digitROI) in digitsLetters.items():
-					# apply correlation-based template matching, take the
-					# score, and update the scores list
-					result = cv2.matchTemplate(roi, digitROI,
-						cv2.TM_CCOEFF)
-					(_, score, _, _) = cv2.minMaxLoc(result)
-					scores.append(score)
-
-				# the classification for the digit ROI will be the reference
-				# digit name with the *largest* template matching score
-				groupOutput.append(chr(ord('A') + np.argmax(scores)))
-
-				# draw the digit classifications around the group
-				cv2.rectangle(image, (gX - 5, gY - 5),
-				(gX + gW + 5, gY + gH + 5), (0, 0, 255), 2)
-				cv2.putText(image, "".join(groupOutput), (gX, gY - 15),
-				cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
-			else:
+			if abs(gY - numbers_y_loc) <= 2:
 				for (digit, digitROI) in digits.items():
 					# apply correlation-based template matching, take the
 					# score, and update the scores list
@@ -300,10 +236,7 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 
 				# the classification for the digit ROI will be the reference
 				# digit name with the *largest* template matching score
-				if np.argmax(scores) == 10:
-					groupOutput.append('/')
-				else:	
-					groupOutput.append(str(np.argmax(scores)))
+				groupOutput.append(str(np.argmax(scores)%10))
 
 				# draw the digit classifications around the group
 				cv2.rectangle(image, (gX - 5, gY - 5),
@@ -320,8 +253,8 @@ for (i, (gX, gY, gW, gH)) in enumerate(locs):
 # display the output credit card information to the screen
 #print("Credit Card Type: {}".format(FIRST_NUMBER[output[0]]))
 print("Credit Card #: {}".format("".join(output)))
-# image = cv2.resize(image,(0,0),fx = 6,fy=6)
-cv2.imwrite("t.png", group)
+image = cv2.resize(image,(0,0),fx = 6,fy=6)
+#cv2.imwrite("t.png", group)
 cv2.imshow("Image", image)
 cv2.imwrite('final.png',image)
 cv2.waitKey(0)
