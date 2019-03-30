@@ -79,7 +79,7 @@ im = cv2.filter2D(gray, -1, kernel)
 mid = cv2.GaussianBlur(im,(0,0),21,21)
 th2 = cv2.adaptiveThreshold(mid,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
             cv2.THRESH_BINARY,11,2)
-im2 = cv2.addWeighted(im,1.5,th2,-0.5,0)
+im2 = cv2.addWeighted(gray,0.75,th2,0.25,0)
 
 
 cv2.imshow("im", im)
